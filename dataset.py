@@ -50,9 +50,16 @@ class KoBARTSummaryDataset(Dataset):
 #         return (torch.tensor(input_ids),
 #                 torch.tensor(dec_input_ids),
 #                 torch.tensor(label_ids))
-        return {'input_ids': np.array(input_ids, dtype=np.int_),
-                'decoder_input_ids': np.array(dec_input_ids, dtype=np.int_),
-                'labels': np.array(label_ids, dtype=np.int_)}
-    
+        input_ids=torch.tensor(input_ids).to(torch.int64).long()
+        dec_input_ids=torch.tensor(dec_input_ids).to(torch.int64).long()
+        label_ids=torch.tensor(label_ids).to(torch.int64).long()
+
+        # return {'input_ids': np.array(input_ids, dtype=np.int_),
+        #         'decoder_input_ids': np.array(dec_input_ids, dtype=np.int_),
+        #         'labels': np.array(label_ids, dtype=np.int_)}
+        #
+        return {'input_ids': input_ids,
+                'decoder_input_ids': dec_input_ids,
+                'labels': label_ids}
     def __len__(self):
         return self.len

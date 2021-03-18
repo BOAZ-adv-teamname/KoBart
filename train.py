@@ -214,7 +214,7 @@ if __name__ == '__main__':
     model = KoBARTConditionalGeneration(args)
 
     dm = KobartSummaryModule(args.train_file,
-                        args.test_file,
+                        args.test_file,None,
                         batch_size=args.batch_size,
                         max_len=args.max_len,
                         num_workers=args.num_workers)
