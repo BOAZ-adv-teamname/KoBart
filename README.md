@@ -7,8 +7,8 @@ pip install git+https://github.com/SKT-AI/KoBART#egg=kobart
 
 ## Requirements
 ```
-pytorch==1.7.0
-transformers==4.0.0
+pytorch==1.7.1
+transformers==4.3.3
 pytorch-lightning==1.1.0
 streamlit==0.72.0
 ```
