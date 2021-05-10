@@ -1,5 +1,16 @@
 # KoBART-summarization
 
+## Usage
+* [infer_path] : 요약을 시킬 데이터
+* [save_path] : 저장할 위치
+* --use_textrank : textrank 사용여부 (default True)
+```
+python main.py --infer_path [infer_path] --save_path [save_path] --use_textrank [True or False]
+```
+
+
+## -----기존 kobart 내용 -------
+
 ## Install KoBART
 ```
 pip install git+https://github.com/SKT-AI/KoBART#egg=kobart
