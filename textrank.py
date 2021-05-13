@@ -1,7 +1,9 @@
 import networkx
 import re
-from konlpy.tag import Mecab
+from konlpy.tag import Mecab,Okt
 import math
+import pandas as pd
+
 
 # Textrank 요약
 class TextRank:
@@ -15,7 +17,16 @@ class TextRank:
         self.dictNear = {}
         self.nTotal = 0
 
-    def loadSents(self, sentenceIter, tokenizer=Mecab()):
+    def clean_text(self,texts):
+        law = re.sub(r'\【이유\】', '', texts)  # remove start
+        law = re.sub(r'\【이 유\】', '', law)  # remove start
+        law = re.sub(r'[@%\\*=()/~#&\+á?\xc3\xa1\-\|\:\;\!\-\,\_\~\$\'\"\[\]]', '', law)  # remove punctuation
+        law = re.sub(r'\d\.', '', law)  # remove number with punctuation
+        law = re.sub(r'\d+', '', law)  # remove number
+        law = re.sub(r'[①②③④⑤⑥⑦]', '', law)  # remove number
+        return law
+
+    def loadSents(self, sentenceIter, tokenizer=Okt()):
         def similarity(a, b):
             n = len(a.intersection(b))
             return n / float(len(a) + len(b) - n) / (math.log(len(a) + 1) * math.log(len(b) + 1))
@@ -55,7 +66,7 @@ class TextRank:
     def summarize(self, ratio=0.333):
         r = self.rank()
         ks = sorted(r, key=r.get, reverse=True)
-        # score = int(len(r)*ratio)
+        score = int(len(r)*ratio)
 
         # 문장 수
         # if score < 3 :
@@ -64,15 +75,67 @@ class TextRank:
         #    score = 3
         # else:
         #    pass
-        score = 3
+        # score = 3
 
         ks = ks[:score]
         return ' '.join(map(lambda k: self.dictCount[k], sorted(ks)))
 
+    def law_to_list(self,data):
+        clean_law=self.clean_text(data)
+        line_law=clean_law.split('.')
+        df_line = pd.DataFrame(line_law)
+        df_line.columns=['original']
+        df_line['length'] = df_line['original'].apply(lambda x: len(x))
+        df_line.drop(df_line.loc[df_line['length'] <= 1].index, inplace=True)
+        df_line.reset_index(drop=True, inplace=True)
+        return df_line
+
+
+    def predict(self,data_path):
+        data = pd.read_csv(data_path, sep='\t')
+        summary=[]
+        tagger=Okt()
+        for i in range(10):
+            self.dictCount = {}
+            self.dictBiCount = {}
+            self.dictNear = {}
+            self.nTotal = 0
+
+            text=data.iloc[i,1]
+            l_list=self.law_to_list(text)
+            stopword = set([('있', 'VV'), ('하', 'VV'), ('되', 'VV')])
+            print(l_list['original'])
+            self.loadSents(l_list['original'],
+                         lambda sent: filter(
+                             lambda x: x not in stopword and x[1] in (
+                             'NNG', 'NNP', 'VV', 'VA', 'Noun', 'verb', 'Adjective'),
+                             tagger.pos(sent)))  # 명사 ,명사 ,동사,
+            self.build()
+            self.rank()
+            final=self.summarize(0.3)
+            print(final[:100])
+            summary.append({
+                "origin" : text,
+                'pred_sum' : final,
+                "origin_sum" : data.iloc[0,1]
+            })
+        return pd.DataFrame(summary)
+
+
+
+
+
+
 if __name__=='__main__':
     tr = TextRank()
-    tagger = Mecab()
+    data = tr.fit(df.iloc[10, 1])['original']
+    tagger = Okt()
     stopword = set([('있', 'VV'), ('하', 'VV'), ('되', 'VV')])
-    tr.loadSents(df_copy['original'][0],
-                 lambda sent: filter(lambda x: x not in stopword and x[1] in ('NNG', 'NNP', 'VV', 'VA'),
-                                     tagger.pos(sent)))
+    tr.loadSents(data,
+                 lambda sent: filter(
+                     lambda x: x not in stopword and x[1] in ('NNG', 'NNP', 'VV', 'VA', 'Noun', 'verb', 'Adjective'),
+                     tagger.pos(sent)))  # 명사 ,명사 ,동사,
+
+    tr.build()
+    ranks = tr.rank()
+    tr.summarize(0.3)
