@@ -3,7 +3,7 @@ import re
 from konlpy.tag import Mecab,Okt
 import math
 import pandas as pd
-
+from tqdm import tqdm
 
 # Textrank 요약
 class TextRank:
@@ -95,7 +95,7 @@ class TextRank:
         data = pd.read_csv(data_path, sep='\t')
         summary=[]
         tagger=Okt()
-        for i in range(10):
+        for i in tqdm(range(2160,2500)):
             self.dictCount = {}
             self.dictBiCount = {}
             self.dictNear = {}
@@ -104,7 +104,7 @@ class TextRank:
             text=data.iloc[i,1]
             l_list=self.law_to_list(text)
             stopword = set([('있', 'VV'), ('하', 'VV'), ('되', 'VV')])
-            print(l_list['original'])
+            # print(l_list['original'])
             self.loadSents(l_list['original'],
                          lambda sent: filter(
                              lambda x: x not in stopword and x[1] in (
@@ -113,11 +113,15 @@ class TextRank:
             self.build()
             self.rank()
             final=self.summarize(0.3)
-            print(final[:100])
+            rate=0.3
+            while final=='' and rate <=1:
+                final=self.summarize(rate)
+                rate += 0.2
+            # print(final[:100])
             summary.append({
                 "origin" : text,
-                'pred_sum' : final,
-                "origin_sum" : data.iloc[0,1]
+                "origin_sum": data.iloc[i, 0],
+                'textrank_sum' : final,
             })
         return pd.DataFrame(summary)
 
