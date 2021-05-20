@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--infer_path", default=None, type=str)
-parser.add_argument("--save_path", default='output/', type=str)
+parser.add_argument("--save_path", default='./output/', type=str)
 parser.add_argument("--use_textrank", default=True, type=bool)
 args = parser.parse_args()
 
@@ -29,23 +29,39 @@ def load_model():
 model = load_model()
 tokenizer = get_kobart_tokenizer()
 outputs=[]
+#gpu option
+USE_CUDA = torch.cuda.is_available()
+print('gpu:',USE_CUDA)
+device = torch.device('cuda' if USE_CUDA else 'cpu')
 
-print(data['pred_sum'])
+print(data['textrank_sum'])
 print('abstract summary ...')
-for i in tqdm(range(10)):
-    text=data.iloc[i,1]
-    if text:
-        text = text.replace('\n', '')
-        input_ids = tokenizer.encode(text)
-        input_ids = torch.tensor(input_ids)
-        input_ids = input_ids.unsqueeze(0)
-        output = model.generate(input_ids, eos_token_id=1, max_length=512, num_beams=5)
-        output = tokenizer.decode(output[0], skip_special_tokens=True)
-        outputs.append(output)
-        print(output)
+start=2160
+end=2500
+for i in tqdm(range(start,end)):
+    try:
+        text = data['textrank_sum'][i - start]
+        if text:
+            text = text.replace('\n', '')
+            input_ids = tokenizer.encode(text)
+            # input_ids = torch.tensor(input_ids).to(torch.int64).long().to(device=device)
+            input_ids = torch.tensor(input_ids)
+            input_ids = input_ids.unsqueeze(0)
+            output = model.generate(input_ids, eos_token_id=1, max_length=512, num_beams=5)
+            output=output.detach().cpu().numpy()
+            output = tokenizer.decode(output[0], skip_special_tokens=True)
+            outputs.append(output)
+            print(output)
+        else:
+            outputs.append('')
 
-# data['pre_summ']=outputs
-# data.to_csv(args.save_path+'summary.csv',index=False)
+    except IndexError:
+        print('err',i)
+        outputs.append('')
+
+
+data['kobart_sum']=outputs
+data.to_csv(args.save_path+'summary_gpu.csv',index=False)
 print('finish')
 
 
