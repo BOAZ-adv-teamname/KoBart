@@ -69,13 +69,13 @@ class TextRank:
         score = int(len(r)*ratio)
 
         # 문장 수
-        # if score < 3 :
-        #    score = len(r)
-        # elif score >= 3:
-        #    score = 3
-        # else:
-        #    pass
-        # score = 3
+        if score < 3 :
+            score = len(r)
+        elif score >= 3:
+            score = 3
+        else:
+            pass
+        
 
         ks = ks[:score]
         return ' '.join(map(lambda k: self.dictCount[k], sorted(ks)))
