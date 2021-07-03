@@ -75,7 +75,7 @@ class TextRank:
             score = 3
         else:
             pass
-        
+
 
         ks = ks[:score]
         return ' '.join(map(lambda k: self.dictCount[k], sorted(ks)))
@@ -95,7 +95,7 @@ class TextRank:
         data = pd.read_csv(data_path, sep='\t')
         summary=[]
         tagger=Okt()
-        for i in tqdm(range(2160,2500)):
+        for i in tqdm(range(0,10)):
             self.dictCount = {}
             self.dictBiCount = {}
             self.dictNear = {}
