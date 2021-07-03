@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--infer_path", default=None, type=str)
 parser.add_argument("--save_path", default='./output/', type=str)
 parser.add_argument("--use_textrank", default=0, type=int)
+parser.add_argument('--max_len',type=int, default=512, help='max seq len')
 args = parser.parse_args()
 
 if args.use_textrank:
@@ -26,7 +27,7 @@ if args.use_textrank:
 else:
     print('use kobart only')
     data = pd.read_csv(args.infer_path)
-    data['article_concat'] = data.article_original.apply(concat)
+    # data['article_concat'] = data.article_original.apply(concat)
 
 
 #pretrain_kobart_model use
@@ -45,13 +46,15 @@ device = torch.device('cuda' if USE_CUDA else 'cpu')
 # print(data['textrank_sum'])
 model=model.to(device=device)
 print('abstract summary ...')
-start=1000
-end=2000
+start=0
+end=len(data)
+# end=20
 for i in tqdm(range(start,end)):
     if args.use_textrank:
         text = data['textrank_sum'][i - start]
     else:
-        text = data['article_concat'][i - start]
+        # text = data['article_concat'][i - start]
+        text = data['article_original'][i - start]
     try:
 
         if text:
@@ -60,7 +63,7 @@ for i in tqdm(range(start,end)):
             input_ids = torch.tensor(input_ids).to(torch.int64).long().to(device=device)
             # input_ids = torch.tensor(input_ids)
             input_ids = input_ids.unsqueeze(0)
-            output = model.generate(input_ids, eos_token_id=1, max_length=128, num_beams=3)
+            output = model.generate(input_ids, eos_token_id=1, max_length=args.max_len, num_beams=4)
             output=output.detach().cpu().numpy()
             output = tokenizer.decode(output[0], skip_special_tokens=True)
             outputs.append(output)
@@ -76,7 +79,7 @@ for i in tqdm(range(start,end)):
 
 
 data['kobart_sum']=outputs
-data.to_csv(args.save_path+'128-1.csv',index=False)
+data.to_csv(args.save_path+'test.csv',index=False)
 print('finish')
 
 
