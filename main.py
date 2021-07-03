@@ -60,7 +60,8 @@ for i in tqdm(range(start,end)):
         if text:
             text = text.replace('\n', '')
             input_ids = tokenizer.encode(text)
-            input_ids = torch.tensor(input_ids).to(torch.int64).long().to(device=device)
+            # input_ids = torch.tensor(input_ids).to(torch.int64).long().to(device=device)
+            input_ids = torch.tensor(input_ids).to(device=device)
             # input_ids = torch.tensor(input_ids)
             input_ids = input_ids.unsqueeze(0)
             output = model.generate(input_ids, eos_token_id=1, max_length=args.max_len, num_beams=4)
