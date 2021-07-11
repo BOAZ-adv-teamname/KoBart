@@ -47,8 +47,8 @@ device = torch.device('cuda' if USE_CUDA else 'cpu')
 model=model.to(device=device)
 print('abstract summary ...')
 start=0
-end=len(data)
-# end=20
+# end=len(data)
+end=10
 for i in tqdm(range(start,end)):
     if args.use_textrank:
         text = data['textrank_sum'][i - start]
@@ -63,10 +63,15 @@ for i in tqdm(range(start,end)):
             # input_ids = torch.tensor(input_ids).to(torch.int64).long().to(device=device)
             input_ids = torch.tensor(input_ids).to(device=device)
             # input_ids = torch.tensor(input_ids)
-            input_ids = input_ids.unsqueeze(0)
-            output = model.generate(input_ids, eos_token_id=1, max_length=args.max_len, num_beams=4)
-            output=output.detach().cpu().numpy()
-            output = tokenizer.decode(output[0], skip_special_tokens=True)
+
+            print(input_ids.size())
+            if input_ids.size()[0] >=1000:
+                output = ''
+            else:
+                input_ids = input_ids.unsqueeze(0)
+                output = model.generate(input_ids, eos_token_id=1, max_length=args.max_len, num_beams=4)
+                output=output.detach().cpu().numpy()
+                output = tokenizer.decode(output[0], skip_special_tokens=True)
             outputs.append(output)
             print(text)
             print(output)
@@ -74,7 +79,7 @@ for i in tqdm(range(start,end)):
         else:
             outputs.append('')
 
-    except IndexError:
+    except IndexError or RuntimeError:
         print('err',i)
         outputs.append('')
 

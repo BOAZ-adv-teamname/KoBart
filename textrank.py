@@ -92,16 +92,18 @@ class TextRank:
 
 
     def predict(self,data_path):
-        data = pd.read_csv(data_path, sep='\t')
+        # data = pd.read_csv(data_path, sep='\t')
+        data = pd.read_csv(data_path)
         summary=[]
         tagger=Okt()
-        for i in tqdm(range(0,10)):
+        data=data.iloc[:10,:]
+        for i in tqdm(range(0,len(data))):
             self.dictCount = {}
             self.dictBiCount = {}
             self.dictNear = {}
             self.nTotal = 0
 
-            text=data.iloc[i,1]
+            text=data['article_original'][i]
             l_list=self.law_to_list(text)
             stopword = set([('있', 'VV'), ('하', 'VV'), ('되', 'VV')])
             # print(l_list['original'])
@@ -118,12 +120,15 @@ class TextRank:
                 final=self.summarize(rate)
                 rate += 0.2
             # print(final[:100])
-            summary.append({
-                "origin" : text,
-                "origin_sum": data.iloc[i, 0],
-                'textrank_sum' : final,
-            })
-        return pd.DataFrame(summary)
+            # summary.append({
+            #     "origin" : text,
+            #     "origin_sum": data.iloc[i, 0],
+            #     'textrank_sum' : final,
+            # })
+            summary.append(final)
+        # return pd.DataFrame(summary)
+        data['textrank_sum'] = summary
+        return data
 
 
 
