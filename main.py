@@ -18,6 +18,7 @@ parser.add_argument("--infer_path", default=None, type=str)
 parser.add_argument("--save_path", default='./output/', type=str)
 parser.add_argument("--use_textrank", default=0, type=int)
 parser.add_argument('--max_len',type=int, default=512, help='max seq len')
+parser.add_argument('--col_name',type=str, default='text_original', help='column name')
 args = parser.parse_args()
 
 if args.use_textrank:
@@ -47,22 +48,22 @@ device = torch.device('cuda' if USE_CUDA else 'cpu')
 model=model.to(device=device)
 print('abstract summary ...')
 start=0
-# end=len(data)
-end=10
+end=len(data)
+# end=10
 for i in tqdm(range(start,end)):
     if args.use_textrank:
         text = data['textrank_sum'][i - start]
     else:
-        # text = data['article_concat'][i - start]
-        text = data['article_original'][i - start]
+        text = data[args.col_name][i - start]
     try:
 
         if text:
             text = text.replace('\n', '')
             input_ids = tokenizer.encode(text)
-            # input_ids = torch.tensor(input_ids).to(torch.int64).long().to(device=device)
-            input_ids = torch.tensor(input_ids).to(device=device)
-            # input_ids = torch.tensor(input_ids)
+            if USE_CUDA:
+                input_ids = torch.tensor(input_ids).to(device=device)
+            else:
+                input_ids = torch.tensor(input_ids)
 
             print(input_ids.size())
             if input_ids.size()[0] >=1000:
@@ -79,7 +80,7 @@ for i in tqdm(range(start,end)):
         else:
             outputs.append('')
 
-    except IndexError or RuntimeError:
+    except IndexError or RuntimeError or AttributeError:
         print('err',i)
         outputs.append('')
 
